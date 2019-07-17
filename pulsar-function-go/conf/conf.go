@@ -93,9 +93,7 @@ func (c *Conf) GetConf() *Conf {
 			log.Errorf("unmarshal config content error:%s", err.Error())
 			return nil
 		}
-	}
-
-	if confFilePath != "" {
+	} else if confFilePath != "" {
 		yamlFile, err := ioutil.ReadFile(confFilePath)
 		if err != nil {
 			log.Errorf("not found conf file, err:%s", err.Error())
@@ -106,6 +104,9 @@ func (c *Conf) GetConf() *Conf {
 			log.Errorf("unmarshal yaml file error:%s", err.Error())
 			return nil
 		}
+	} else {
+		log.Errorf("no yaml file or conf content provided")
+		return nil
 	}
 
 	return c
