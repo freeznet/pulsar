@@ -87,6 +87,14 @@ func (c *Conf) GetConf() *Conf {
 		flag.Usage()
 	}
 
+	if confContent != "" {
+		err := json.Unmarshal([]byte(confContent), c)
+		if err != nil {
+			log.Errorf("unmarshal config content error:%s", err.Error())
+			return nil
+		}
+	}
+
 	if confFilePath != "" {
 		yamlFile, err := ioutil.ReadFile(confFilePath)
 		if err != nil {
@@ -100,13 +108,6 @@ func (c *Conf) GetConf() *Conf {
 		}
 	}
 
-	if confContent != "" {
-		err := json.Unmarshal([]byte(confContent), c)
-		if err != nil {
-			log.Errorf("unmarshal config content error:%s", err.Error())
-			return nil
-		}
-	}
 	return c
 }
 
