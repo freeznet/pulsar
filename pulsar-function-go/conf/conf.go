@@ -107,18 +107,16 @@ func (c *Conf) GetConf() *Conf {
 		return nil
 	}
 
-	if confFilePath != "" {
-		if confFileExists {
-			yamlFile, err := ioutil.ReadFile(confFilePath)
-			if err != nil {
-				log.Errorf("not found conf file, err:%s", err.Error())
-				return nil
-			}
-			err = yaml.Unmarshal(yamlFile, c)
-			if err != nil {
-				log.Errorf("unmarshal yaml file error:%s", err.Error())
-				return nil
-			}
+	if confFileExists {
+		yamlFile, err := ioutil.ReadFile(confFilePath)
+		if err != nil {
+			log.Errorf("not found conf file, err:%s", err.Error())
+			return nil
+		}
+		err = yaml.Unmarshal(yamlFile, c)
+		if err != nil {
+			log.Errorf("unmarshal yaml file error:%s", err.Error())
+			return nil
 		}
 	}
 
