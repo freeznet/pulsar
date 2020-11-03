@@ -35,4 +35,4 @@ function kubernetes::ensure_charts_release() {
 }
 
 kubernetes::ensure_charts_release
-/bin/bash -e ${CHARTS_HOME}/.ci/chart_test.sh ${CHARTS_HOME}/.ci/clusters/values-function.yaml
+/bin/bash -e ${CHARTS_HOME}/.ci/chart_test.sh .ci/clusters/values-function.yaml
