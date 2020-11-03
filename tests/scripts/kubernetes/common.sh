@@ -50,9 +50,9 @@ ${KUBECTL} get pods -n ${NAMESPACE} --field-selector=status.phase=Running | grep
 ${KUBECTL} get svc -n ${NAMESPACE}
 
 export PROXY_IP=$(${KUBECTL} describe svc/${CLUSTER}-proxy -n ${NAMESPACE} | grep IP: | awk '{print $2;}')
-echo CLUSTER_IP=$CLUSTER_IP
+echo CLUSTER_IP=$PROXY_IP
 
-curl http://${CLUSTER_IP}:8080
+curl http://${PROXY_IP}:8080
 
 echo "########### remove clusters ############"
 ci::delete_cluster
