@@ -21,6 +21,8 @@
 PULSAR_CHARTS_RELEASE_VERSION="1.3.2"
 PULSAR_HOME=$(unset CDPATH && cd $(dirname "${BASH_SOURCE[0]}")/.. && pwd)
 KUBERNETES_HOME=${PULSAR_HOME}/charts
+TESTS_HOME=${PULSAR_HOME}/tests
+CHARTS_HOME=${KUBERNETES_HOME}/charts-pulsar-${PULSAR_CHARTS_RELEASE_VERSION}
 
 function kubernetes::ensure_charts_release() {
     echo "Installing pulsar charts release v$PULSAR_CHARTS_RELEASE_VERSION..."
@@ -28,8 +30,9 @@ function kubernetes::ensure_charts_release() {
     trap "test -f $tmpfile && rm $tmpfile" RETURN
     mkdir -p $KUBERNETES_HOME
     curl --retry 10 -L -s https://github.com/streamnative/charts/archive/pulsar-${PULSAR_CHARTS_RELEASE_VERSION}.tar.gz | tar -C $KUBERNETES_HOME -zxvf - 
-    cd $KUBERNETES_HOME
+    cd $CHARTS_HOME
     ls -l
 }
 
 kubernetes::ensure_charts_release
+/bin/bash -e ${CHARTS_HOME}/.ci/chart_test.sh ${CHARTS_HOME}/.ci/clusters/values-function.yaml
