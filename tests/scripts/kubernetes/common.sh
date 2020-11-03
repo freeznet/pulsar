@@ -35,5 +35,20 @@ function kubernetes::ensure_charts_release() {
 }
 
 kubernetes::ensure_charts_release
+# run helm dep update before helm install to ensure dependency is installed
 sed -i'.bak' "80a \${HELM} dependency update \${CHARTS_HOME}/charts/pulsar" ${CHARTS_HOME}/.ci/helm.sh
+sed -i'.bak' "147a echo 'test_pulsar_function'" ${CHARTS_HOME}/.ci/helm.sh
+# remove last line to prevent cluster delete
+sed -i'.bak' "$ d" ${CHARTS_HOME}/.ci/chart_test.sh
+
 FUNCTION="true" /bin/bash -e ${CHARTS_HOME}/.ci/chart_test.sh .ci/clusters/values-function.yaml
+
+echo "########### cluster ready ############"
+
+source ${CHARTS_HOME}/.ci/chart_test.sh
+source ${CHARTS_HOME}/.ci/helm.sh
+${KUBECTL} get pods -n ${NAMESPACE} --field-selector=status.phase=Running | grep ${CLUSTER}-proxy
+${KUBECTL} get svc -n ${NAMESPACE}
+
+echo "########### remove clusters ############"
+ci::delete_cluster
