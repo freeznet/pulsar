@@ -26,11 +26,9 @@ function kubernetes::ensure_charts_release() {
     echo "Installing pulsar charts release v$PULSAR_CHARTS_RELEASE_VERSION..."
     tmpfile=$(mktemp)
     trap "test -f $tmpfile && rm $tmpfile" RETURN
-    curl --retry 10 -L -o $tmpfile https://github.com/streamnative/charts/archive/pulsar-${PULSAR_CHARTS_RELEASE_VERSION}.tar.gz
     mkdir -p $KUBERNETES_HOME
-    mv $tmpfile ${KUBERNETES_HOME}/charts.tar.gz
+    curl --retry 10 -L -s https://github.com/streamnative/charts/archive/pulsar-${PULSAR_CHARTS_RELEASE_VERSION}.tar.gz | tar -C $KUBERNETES_HOME -zxvf - 
     cd $KUBERNETES_HOME
-    tar -zxvf charts.tar.gz
     ls -l
 }
 
