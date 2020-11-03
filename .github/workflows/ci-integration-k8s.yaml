@@ -96,11 +96,13 @@ jobs:
       - name: ensure utils
         if: steps.docs.outputs.changed_only == 'no'
         run: |
-          tests/scripts/kubernates/common.sh
+          tests/scripts/kubernetes/common.sh
+        env:
+          FUNCTION: "true"
 
       # - name: Install chart
       #   run: |
-      #     tests/resources/kubernates/chart_test.sh .ci/clusters/values-integration-tests.yaml
+      #     tests/resources/kubernetes/chart_test.sh .ci/clusters/values-integration-tests.yaml
       #   env:
       #     FUNCTION: "true"
       #   # Only build a kind cluster if there are chart changes to test.
