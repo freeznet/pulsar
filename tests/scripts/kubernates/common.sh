@@ -19,9 +19,9 @@
 #
 
 PULSAR_CHARTS_RELEASE_VERSION="1.3.2"
-PULSAR_HOME=$(unset CDPATH && cd $(dirname "${BASH_SOURCE[0]}")/.. && pwd)
-KUBERNETES_HOME=${PULSAR_HOME}/charts
+PULSAR_HOME=$(unset CDPATH && cd $(dirname "${BASH_SOURCE[0]}")/../../.. && pwd)
 TESTS_HOME=${PULSAR_HOME}/tests
+KUBERNETES_HOME=${TESTS_HOME}/k8s
 CHARTS_HOME=${KUBERNETES_HOME}/charts-pulsar-${PULSAR_CHARTS_RELEASE_VERSION}
 
 function kubernetes::ensure_charts_release() {
