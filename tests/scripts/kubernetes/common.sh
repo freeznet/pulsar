@@ -49,7 +49,7 @@ source ${CHARTS_HOME}/.ci/helm.sh
 ${KUBECTL} get pods -n ${NAMESPACE} --field-selector=status.phase=Running | grep ${CLUSTER}-proxy
 ${KUBECTL} get svc -n ${NAMESPACE}
 
-export PROXY_IP=$(${KUBECTL} describe svc/${CLUSTER}-proxy | grep IP: | awk '{print $2;}')
+export PROXY_IP=$(${KUBECTL} describe svc/${CLUSTER}-proxy -n ${NAMESPACE} | grep IP: | awk '{print $2;}')
 echo CLUSTER_IP=$CLUSTER_IP
 
 curl http://${CLUSTER_IP}:8080
