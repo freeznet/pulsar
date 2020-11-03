@@ -96,7 +96,7 @@ jobs:
       - name: ensure utils
         if: steps.docs.outputs.changed_only == 'no'
         run: |
-          tests/resources/kubernates/common.sh
+          tests/scripts/kubernates/common.sh
 
       # - name: Install chart
       #   run: |
