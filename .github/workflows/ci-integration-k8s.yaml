@@ -94,10 +94,9 @@ jobs:
       #   run: mvn -B -f tests/docker-images/pom.xml install -am -Pdocker -DskipTests
 
       - name: ensure utils
+        if: steps.docs.outputs.changed_only == 'no'
         run: |
           tests/resources/kubernates/common.sh
-        # Only build a kind cluster if there are chart changes to test.
-        if: steps.lint.outputs.changed == 'true'
 
       # - name: Install chart
       #   run: |
