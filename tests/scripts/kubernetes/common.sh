@@ -35,5 +35,5 @@ function kubernetes::ensure_charts_release() {
 }
 
 kubernetes::ensure_charts_release
-sed "80a \${HELM} dependency update \${CHARTS_HOME}/charts/pulsar" ${CHARTS_HOME}/.ci/helm.sh
+sed -i'.bak' "80a \${HELM} dependency update \${CHARTS_HOME}/charts/pulsar" ${CHARTS_HOME}/.ci/helm.sh
 FUNCTION="true" /bin/bash -e ${CHARTS_HOME}/.ci/chart_test.sh .ci/clusters/values-function.yaml
