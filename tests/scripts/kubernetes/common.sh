@@ -45,7 +45,6 @@ FUNCTION="true" /bin/bash -e ${CHARTS_HOME}/.ci/chart_test.sh .ci/clusters/value
 
 echo "########### cluster ready ############"
 
-source ${CHARTS_HOME}/.ci/chart_test.sh
 source ${CHARTS_HOME}/.ci/helm.sh
 ${KUBECTL} get pods -n ${NAMESPACE} --field-selector=status.phase=Running | grep ${CLUSTER}-proxy
 ${KUBECTL} get svc -n ${NAMESPACE}
