@@ -68,5 +68,9 @@ done
 
 curl http://127.0.0.1:8080
 
+node_port=$(kubectl get service -n ${NAMESPACE} ${CLUSTER}-proxy -o=jsonpath="{.spec.ports[?(@.port == 8080)].nodePort}")
+echo node_port=$node_port
+curl http://127.0.0.1:${node_port}
+
 echo "########### remove clusters ############"
 ci::delete_cluster

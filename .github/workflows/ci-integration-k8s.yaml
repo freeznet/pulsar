@@ -33,7 +33,7 @@ jobs:
 
   kubernetes:
     name:
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     timeout-minutes: 120
 
     steps:
