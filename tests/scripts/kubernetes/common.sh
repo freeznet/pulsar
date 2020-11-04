@@ -54,9 +54,8 @@ ${KUBECTL} get svc -n ${NAMESPACE}
 
 # ${KUBECTL} port-forward -n ${NAMESPACE} svc/${CLUSTER}-proxy 6650:6650
 # ${KUBECTL} port-forward -n ${NAMESPACE} svc/${CLUSTER}-proxy 8080:8080
-registryNode=${clusterName}-control-plane
+registryNode=$(docker ps --format="{{.Names}}" |grep '-control-plane')
 echo registryNode=$registryNode
-docker ps
 for port in 6650 8080
 do
     node_port=$(kubectl get service -n ${NAMESPACE} ${CLUSTER}-proxy -o=jsonpath="{.spec.ports[?(@.port == ${port})].nodePort}")
