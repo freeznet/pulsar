@@ -84,3 +84,5 @@ docker network ls
 
 echo "########### remove clusters ############"
 ci::delete_cluster
+
+echo "########### DONE ############"
