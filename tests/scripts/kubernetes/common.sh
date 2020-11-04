@@ -41,7 +41,7 @@ sed -i'.bak' "147a echo 'test_pulsar_function'" ${CHARTS_HOME}/.ci/helm.sh
 # remove last line to prevent cluster delete
 sed -i'.bak' "$ d" ${CHARTS_HOME}/.ci/chart_test.sh
 
-FUNCTION="true" /bin/bash -e ${CHARTS_HOME}/.ci/chart_test.sh .ci/clusters/values-function.yaml
+FUNCTION="true" /bin/bash -e ${CHARTS_HOME}/.ci/chart_test.sh ../../scripts/kubernetes/values-function.yaml
 
 echo "########### cluster ready ############"
 
@@ -49,11 +49,24 @@ source ${CHARTS_HOME}/.ci/helm.sh
 ${KUBECTL} get pods -n ${NAMESPACE} --field-selector=status.phase=Running | grep ${CLUSTER}-proxy
 ${KUBECTL} get svc -n ${NAMESPACE}
 
-export PROXY_IP=$(${KUBECTL} describe svc/${CLUSTER}-proxy -n ${NAMESPACE} | grep IP: | awk '{print $2;}')
-echo CLUSTER_IP=$PROXY_IP
+# export PROXY_IP=$(${KUBECTL} describe svc/${CLUSTER}-proxy -n ${NAMESPACE} | grep IP: | awk '{print $2;}')
+# echo CLUSTER_IP=$PROXY_IP
 
-${KUBECTL} port-forward -n ${NAMESPACE} svc/${CLUSTER}-proxy 6650:6650
-${KUBECTL} port-forward -n ${NAMESPACE} svc/${CLUSTER}-proxy 8080:8080
+# ${KUBECTL} port-forward -n ${NAMESPACE} svc/${CLUSTER}-proxy 6650:6650
+# ${KUBECTL} port-forward -n ${NAMESPACE} svc/${CLUSTER}-proxy 8080:8080
+registryNode=${clusterName}-control-plane
+echo registryNode=$registryNode
+docker ps
+for port in 6650 8080
+do
+    node_port=$(kubectl get service -n ${NAMESPACE} ${CLUSTER}-proxy -o=jsonpath="{.spec.ports[?(@.port == ${port})].nodePort}")
+
+    docker run -d --name pulsar-kind-proxy-${port} \
+      --publish 127.0.0.1:${port}:${port} \
+      --link ${registryNode}:target \
+      alpine/socat -dd \
+      tcp-listen:${port},fork,reuseaddr tcp-connect:target:${node_port}
+done
 
 curl http://127.0.0.1:8080
 
