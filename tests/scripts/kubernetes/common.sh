@@ -72,5 +72,9 @@ node_port=$(kubectl get service -n ${NAMESPACE} ${CLUSTER}-proxy -o=jsonpath="{.
 echo node_port=$node_port
 curl http://127.0.0.1:${node_port}
 
+CONTROL_PLANE_IP=$(docker inspect $registryNode | jq -r '.[].NetworkSettings.Networks.bridge.IPAddress')
+echo CONTROL_PLANE_IP=$CONTROL_PLANE_IP
+curl $CONTROL_PLANE_IP:$node_port
+
 echo "########### remove clusters ############"
 ci::delete_cluster
