@@ -49,13 +49,11 @@ source ${CHARTS_HOME}/.ci/helm.sh
 ${KUBECTL} get pods -n ${NAMESPACE} --field-selector=status.phase=Running | grep ${CLUSTER}-proxy
 ${KUBECTL} get svc -n ${NAMESPACE}
 
-# export PROXY_IP=$(${KUBECTL} describe svc/${CLUSTER}-proxy -n ${NAMESPACE} | grep IP: | awk '{print $2;}')
-# echo CLUSTER_IP=$PROXY_IP
-
-# ${KUBECTL} port-forward -n ${NAMESPACE} svc/${CLUSTER}-proxy 6650:6650
-# ${KUBECTL} port-forward -n ${NAMESPACE} svc/${CLUSTER}-proxy 8080:8080
-docker ps --format="{{.Names}}" | grep "-control-plane"
-registryNode=$(docker ps --format="{{.Names}}" | grep "-control-plane")
+echo "########### expose ports ############"
+type grep
+echo docker ps --format="{{.Names}}" | grep "worker"
+docker ps --format="{{.Names}}" | grep "worker"
+registryNode=$(docker ps --format="{{.Names}}" | grep "worker")
 echo registryNode=$registryNode
 for port in 6650 8080
 do
