@@ -52,7 +52,10 @@ ${KUBECTL} get svc -n ${NAMESPACE}
 export PROXY_IP=$(${KUBECTL} describe svc/${CLUSTER}-proxy -n ${NAMESPACE} | grep IP: | awk '{print $2;}')
 echo CLUSTER_IP=$PROXY_IP
 
-curl http://${PROXY_IP}:8080
+${KUBECTL} port-forward -n ${NAMESPACE} svc/${CLUSTER}-proxy 6650:6650
+${KUBECTL} port-forward -n ${NAMESPACE} svc/${CLUSTER}-proxy 8080:8080
+
+curl http://127.0.0.1:8080
 
 echo "########### remove clusters ############"
 ci::delete_cluster
