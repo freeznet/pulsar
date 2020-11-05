@@ -59,13 +59,13 @@ for port in 6650 8080
 do
     node_port=$(kubectl get service -n ${NAMESPACE} ${CLUSTER}-proxy -o=jsonpath="{.spec.ports[?(@.port == ${port})].nodePort}")
     echo docker run -d --name pulsar-kind-proxy-${port} \
-      -p 127.0.0.1:${port}:${port} \
-      --network="container:${registryNode}" \
+      --publish 127.0.0.1:${port}:${port} \
+      --network="kind" \
       alpine/socat -dd \
       tcp-listen:${port},fork,reuseaddr tcp-connect:${registryNode}:${node_port}
     docker run -d --name pulsar-kind-proxy-${port} \
-      -p 127.0.0.1:${port}:${port} \
-      --network="container:${registryNode}" \
+      --publish 127.0.0.1:${port}:${port} \
+      --network="kind" \
       alpine/socat -dd \
       tcp-listen:${port},fork,reuseaddr tcp-connect:${registryNode}:${node_port}
 done
