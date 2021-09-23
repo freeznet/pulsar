@@ -68,6 +68,7 @@ public class PackageNameTest {
 
         try {
             PackageName.get("function:///public/default/test-error@v1");
+            Assert.fail("should throw IllegalArgumentException");
         } catch (Exception e) {
             Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
         }
@@ -76,12 +77,14 @@ public class PackageNameTest {
         // invalid package type
         try {
             PackageName.get("functions", "public", "default", "test-error", "v1");
+            Assert.fail("should throw IllegalArgumentException");
         } catch (Exception e) {
             Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
         }
 
         try {
             PackageName.get("functions://public/default/test-error@v1");
+            Assert.fail("should throw IllegalArgumentException");
         } catch (Exception e) {
             Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
         }
@@ -89,6 +92,7 @@ public class PackageNameTest {
         // invalid namespace name
         try {
             PackageName.get("function", "public/default", "default", "test-error", "v1");
+            Assert.fail("should throw IllegalArgumentException");
         } catch (Exception e) {
             Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
         }
@@ -96,12 +100,14 @@ public class PackageNameTest {
         // invalid package name
         try {
             PackageName.get("function", "public/default/name@v1", "");
+            Assert.fail("should throw IllegalArgumentException");
         } catch (Exception e) {
             Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
         }
 
         try {
             PackageName.get("function://public/default/name#v1");
+            Assert.fail("should throw IllegalArgumentException");
         } catch (Exception e) {
             Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
         }
@@ -109,6 +115,7 @@ public class PackageNameTest {
         // invalid package version
         try {
             PackageName.get("function://public/default/test-error-version/v2");
+            Assert.fail("should throw IllegalArgumentException");
         } catch (Exception e) {
             Assert.assertTrue(e.getCause() instanceof IllegalArgumentException);
         }
