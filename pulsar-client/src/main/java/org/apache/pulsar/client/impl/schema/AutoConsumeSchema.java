@@ -26,6 +26,7 @@ import org.apache.pulsar.client.api.schema.GenericRecord;
 import org.apache.pulsar.client.api.schema.SchemaInfoProvider;
 import org.apache.pulsar.client.impl.schema.generic.GenericProtobufNativeSchema;
 import org.apache.pulsar.client.impl.schema.generic.GenericSchemaImpl;
+import org.apache.pulsar.client.impl.schema.util.SchemaUtil;
 import org.apache.pulsar.common.protocol.schema.BytesSchemaVersion;
 import org.apache.pulsar.common.protocol.schema.SchemaVersion;
 import org.apache.pulsar.common.schema.KeyValue;
@@ -38,6 +39,7 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 
 import static com.google.common.base.Preconditions.checkState;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
 /**
  * Auto detect schema, returns only GenericRecord instances.
@@ -172,11 +174,42 @@ public class AutoConsumeSchema implements Schema<GenericRecord> {
         switch (schemaInfo.getType()) {
             case JSON:
             case AVRO:
-                return GenericSchemaImpl.of(schemaInfo,useProvidedSchemaAsReaderSchema);
+                return extractFromAvroSchema(schemaInfo, useProvidedSchemaAsReaderSchema);
             case PROTOBUF_NATIVE:
                 return GenericProtobufNativeSchema.of(schemaInfo, useProvidedSchemaAsReaderSchema);
             default:
                 return getSchema(schemaInfo);
+        }
+    }
+
+    private static Schema<?> extractFromAvroSchema(SchemaInfo schemaInfo, final boolean useProvidedSchemaAsReaderSchema) {
+        org.apache.avro.Schema avroSchema = SchemaUtil.parseAvroSchema(new String(schemaInfo.getSchema(), UTF_8));
+        switch (avroSchema.getType()) {
+            case BYTES:
+                return ByteSchema.of();
+            case ENUM:
+            case STRING:
+                return StringSchema.utf8();
+            case INT:
+                return IntSchema.of();
+            case LONG:
+                return LongSchema.of();
+            case FLOAT:
+                return FloatSchema.of();
+            case DOUBLE:
+                return DoubleSchema.of();
+            case BOOLEAN:
+                return BooleanSchema.of();
+            case RECORD:
+                return GenericSchemaImpl.of(schemaInfo, useProvidedSchemaAsReaderSchema);
+            case ARRAY:
+            case MAP:
+            case UNION:
+            case FIXED:
+            case NULL:
+            default:
+                throw new IllegalArgumentException("Retrieve schema instance from avro schema info for type '"
+                    + avroSchema.getType() + "' is not supported yet");
         }
     }
 
