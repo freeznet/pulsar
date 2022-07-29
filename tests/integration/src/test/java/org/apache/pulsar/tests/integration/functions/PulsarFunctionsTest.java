@@ -1599,6 +1599,8 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
             producer.send("message-" + i);
         }
 
+        Thread.sleep(5 * 1000);
+
         // validate log messages
         Set<String> expectedMessages = new HashSet<>();
         for (int i = 0; i < numMessages; i++) {
