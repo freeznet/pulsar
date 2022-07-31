@@ -1513,8 +1513,6 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
             publishAndConsumeMessages(inputTopicName, outputTopicName, logTopicName, numMessages, "-log");
         } finally {
             // dump function logs so that it's easier to investigate failures
-            log.info("Function Instance stats: {}",
-                    Json.pretty(pulsarAdmin.functions().getFunctionStats("public", "default", functionName)));
             log.info("Function Output topic stats: {}",
                     Json.pretty(pulsarAdmin.topics().getStats(outputTopicName, true)));
             log.info("Function Output topic internal-stats: {}",
