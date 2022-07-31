@@ -1487,9 +1487,11 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
         }
 
         String inputTopicName = "persistent://public/default/test-log-" + runtime + "-input-" + randomName(8);
+        String outputTopicName = "persistent://public/default/test-log-" + runtime + "-output-" + randomName(8);
         String logTopicName = "test-log-" + runtime + "-log-topic-" + randomName(8);
         try (PulsarAdmin admin = PulsarAdmin.builder().serviceHttpUrl(pulsarCluster.getHttpServiceUrl()).build()) {
             admin.topics().createNonPartitionedTopic(inputTopicName);
+            admin.topics().createNonPartitionedTopic(outputTopicName);
             admin.topics().createNonPartitionedTopic(logTopicName);
         }
 
@@ -1498,7 +1500,7 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
 
         // submit the exclamation function
         submitJavaLoggingFunction(
-                inputTopicName, logTopicName, functionName, schema);
+                inputTopicName, outputTopicName, logTopicName, functionName, schema);
 
         // get function info
         getFunctionInfoSuccess(functionName);
@@ -1508,9 +1510,13 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
 
         try {
             // publish and consume result
-            publishAndConsumeMessages(inputTopicName, logTopicName, numMessages, "-log");
+            publishAndConsumeMessages(inputTopicName, outputTopicName, logTopicName, numMessages, "-log");
         } finally {
             // dump function logs so that it's easier to investigate failures
+            log.info("Function Output topic stats: {}",
+                    Json.pretty(pulsarAdmin.topics().getStats(outputTopicName, true)));
+            log.info("Function Output topic internal-stats: {}",
+                    Json.pretty(pulsarAdmin.topics().getInternalStats(outputTopicName, true)));
             pulsarCluster.dumpFunctionLogs(functionName);
         }
 
@@ -1533,6 +1539,7 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
     }
 
     private void submitJavaLoggingFunction(String inputTopicName,
+                                           String outputTopicName,
                                            String logTopicName,
                                            String functionName,
                                            Schema<?> schema) throws Exception {
@@ -1546,6 +1553,7 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
             generator = CommandGenerator.createDefaultGenerator(inputTopicName, LOGGING_JAVA_CLASS);
         }
         generator.setLogTopic(logTopicName);
+        generator.setSinkTopic(outputTopicName);
         generator.setFunctionName(functionName);
         String command = generator.generateCreateFunctionCommand();
 
@@ -1562,13 +1570,20 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
 
     private void publishAndConsumeMessages(String inputTopic,
                                            String outputTopic,
+                                           String logTopic,
                                            int numMessages,
                                            String messagePostfix) throws Exception {
         @Cleanup PulsarClient client = PulsarClient.builder()
                 .serviceUrl(pulsarCluster.getPlainTextServiceUrl())
                 .build();
 
-        @Cleanup Consumer<byte[]> consumer = client.newConsumer()
+        @Cleanup Consumer<byte[]> logConsumer = client.newConsumer()
+                .topic(logTopic)
+                .subscriptionType(SubscriptionType.Exclusive)
+                .subscriptionName("test-sub")
+                .subscribe();
+
+        @Cleanup Consumer<byte[]> outputConsumer = client.newConsumer()
                 .topic(outputTopic)
                 .subscriptionType(SubscriptionType.Exclusive)
                 .subscriptionName("test-sub")
@@ -1582,13 +1597,42 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
             producer.send("message-" + i);
         }
 
+        Thread.sleep(5 * 1000);
+
+        // validate log messages
         Set<String> expectedMessages = new HashSet<>();
         for (int i = 0; i < numMessages; i++) {
             expectedMessages.add("message-" + i + messagePostfix);
         }
 
         for (int i = 0; i < numMessages; i++) {
-            Message<byte[]> msg = consumer.receive(30, TimeUnit.SECONDS);
+            Message<byte[]> msg = logConsumer.receive(30, TimeUnit.SECONDS);
+            if (msg == null) {
+                log.info("Input topic stats: {}",
+                        Json.pretty(pulsarAdmin.topics().getStats(inputTopic, true)));
+                log.info("Log topic stats: {}",
+                        Json.pretty(pulsarAdmin.topics().getStats(logTopic, true)));
+                log.info("Input topic internal-stats: {}",
+                        Json.pretty(pulsarAdmin.topics().getInternalStats(inputTopic, true)));
+                log.info("Log topic internal-stats: {}",
+                        Json.pretty(pulsarAdmin.topics().getInternalStats(logTopic, true)));
+            }
+            String logMsg = new String(msg.getValue(), UTF_8);
+            log.info("Received log message: '{}'", logMsg);
+            assertTrue(expectedMessages.contains(logMsg), "Message '" + logMsg + "' not expected");
+            expectedMessages.remove(logMsg);
+        }
+
+        assertTrue(expectedMessages.isEmpty(), "Expected messages not received: " + expectedMessages);
+
+        // validate output messages
+        expectedMessages = new HashSet<>();
+        for (int i = 0; i < numMessages; i++) {
+            expectedMessages.add("message-" + i + "!");
+        }
+
+        for (int i = 0; i < numMessages; i++) {
+            Message<byte[]> msg = outputConsumer.receive(30, TimeUnit.SECONDS);
             if (msg == null) {
                 log.info("Input topic stats: {}",
                         Json.pretty(pulsarAdmin.topics().getStats(inputTopic, true)));
@@ -1599,13 +1643,14 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
                 log.info("Output topic internal-stats: {}",
                         Json.pretty(pulsarAdmin.topics().getInternalStats(outputTopic, true)));
             }
-            String logMsg = new String(msg.getValue(), UTF_8);
-            log.info("Received message: '{}'", logMsg);
-            assertTrue(expectedMessages.contains(logMsg), "Message '" + logMsg + "' not expected");
-            expectedMessages.remove(logMsg);
+            String outputMsg = new String(msg.getValue(), UTF_8);
+            log.info("Received message: '{}'", outputMsg);
+            assertTrue(expectedMessages.contains(outputMsg), "Message '" + outputMsg + "' not expected");
+            expectedMessages.remove(outputMsg);
         }
 
-        consumer.close();
+        logConsumer.close();
+        outputConsumer.close();
         producer.close();
         client.close();
     }
