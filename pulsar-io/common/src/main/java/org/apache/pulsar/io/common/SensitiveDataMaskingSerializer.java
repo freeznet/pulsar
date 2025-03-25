@@ -23,8 +23,9 @@ import com.fasterxml.jackson.databind.JsonSerializer;
 import com.fasterxml.jackson.databind.SerializerProvider;
 import java.io.IOException;
 import java.io.Serializable;
-import java.util.Map;
+import java.lang.reflect.Field;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pulsar.io.core.annotations.FieldDoc;
 
 /**
  * Custom serializer that masks sensitive fields in config objects when serialized to JSON.
@@ -32,15 +33,63 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class SensitiveDataMaskingSerializer extends JsonSerializer<Serializable> {
 
+    private static final String MASK_VALUE = "********";
+
     @Override
     public void serialize(Serializable value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        try {
-            Map<String, Object> maskedConfig = SensitiveDataMaskingUtil.getMaskedConfig(value);
-            gen.writeObject(maskedConfig);
-        } catch (Exception e) {
-            log.warn("Error while masking sensitive fields, using default serialization", e);
-            // Fallback to default serialization
-            gen.writeObject(value);
+        if (value == null) {
+            serializers.defaultSerializeNull(gen);
+            return;
         }
+
+        // Write JSON directly instead of using writeObject to avoid infinite recursion
+        gen.writeStartObject();
+
+        try {
+            // Use reflection to get all fields from the object class
+            for (Field field : IOConfigUtils.getAllFields(value.getClass())) {
+                field.setAccessible(true);
+                String fieldName = field.getName();
+                Object fieldValue;
+
+                try {
+                    fieldValue = field.get(value);
+                } catch (Exception e) {
+                    log.warn("Failed to get value for field {}", fieldName, e);
+                    continue;
+                }
+
+                // Check if the field is marked as sensitive
+                boolean isSensitive = false;
+                for (var annotation : field.getAnnotations()) {
+                    if (annotation instanceof FieldDoc) {
+                        FieldDoc fieldDoc = (FieldDoc) annotation;
+                        if (fieldDoc.sensitive()) {
+                            isSensitive = true;
+                            break;
+                        }
+                    }
+                }
+
+                // Write the field name
+                gen.writeFieldName(fieldName);
+
+                // Write masked value for sensitive fields or use standard serialization for others
+                if (isSensitive && fieldValue != null) {
+                    gen.writeString(MASK_VALUE);
+                } else {
+                    serializers.defaultSerializeValue(fieldValue, gen);
+                }
+            }
+        } catch (Exception e) {
+            log.error("Error serializing with sensitive data masking", e);
+            // Fall back to default serialization in case of error
+            gen.writeEndObject();
+            gen.flush();
+            serializers.defaultSerializeValue(value, gen);
+            return;
+        }
+
+        gen.writeEndObject();
     }
 }

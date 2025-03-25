@@ -24,10 +24,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -101,11 +100,15 @@ public class IOConfigUtils {
         return MAPPER.convertValue(configs, clazz);
     }
 
-    public static List<Field> getAllFields(Class<?> type) {
-        List<Field> fields = new LinkedList<>();
-        fields.addAll(Arrays.asList(type.getDeclaredFields()));
-        if (type.getSuperclass() != null) {
-            fields.addAll(getAllFields(type.getSuperclass()));
+    public static List<Field> getAllFields(Class<?> clazz) {
+        List<Field> fields = new ArrayList<>();
+        for (Field field : clazz.getDeclaredFields()) {
+            fields.add(field);
+        }
+
+        // Prevent infinite recursion by stopping at Object.class
+        if (clazz.getSuperclass() != null && !clazz.getSuperclass().equals(Object.class)) {
+            fields.addAll(getAllFields(clazz.getSuperclass()));
         }
         return fields;
     }

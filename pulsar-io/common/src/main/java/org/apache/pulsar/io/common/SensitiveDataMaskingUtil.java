@@ -20,7 +20,9 @@ package org.apache.pulsar.io.common;
 
 import java.lang.reflect.Field;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pulsar.io.core.annotations.FieldDoc;
 
@@ -71,11 +73,31 @@ public class SensitiveDataMaskingUtil {
      * @return A map with the same keys but with sensitive values masked
      */
     public static <T> Map<String, Object> getMaskedConfig(T config) {
+        return getMaskedConfig(config, new HashSet<>());
+    }
+
+    /**
+     * Internal implementation with cycle detection.
+     *
+     * @param config  The configuration object to mask
+     * @param visited Set of already visited objects to prevent infinite recursion
+     * @param <T>     The type of the configuration object
+     * @return A map with the same keys but with sensitive values masked
+     */
+    private static <T> Map<String, Object> getMaskedConfig(T config, Set<Object> visited) {
         Map<String, Object> maskedConfig = new HashMap<>();
 
         if (config == null) {
             return maskedConfig;
         }
+
+        // Prevent infinite recursion from circular references
+        if (visited.contains(config)) {
+            return maskedConfig;
+        }
+
+        // Add to visited set
+        visited.add(config);
 
         try {
             // Use reflection to get all fields from the config class
@@ -113,6 +135,9 @@ public class SensitiveDataMaskingUtil {
         } catch (Exception e) {
             log.error("Error creating masked config", e);
         }
+
+        // Remove from visited set to allow reuse in other paths
+        visited.remove(config);
 
         return maskedConfig;
     }
