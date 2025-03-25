@@ -34,11 +34,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.pulsar.io.core.SinkContext;
 import org.apache.pulsar.io.core.SourceContext;
 import org.apache.pulsar.io.core.annotations.FieldDoc;
+import java.io.Serializable;
 
 @Slf4j
 public class IOConfigUtils {
 
-    private static final ObjectMapper MAPPER = new ObjectMapper();
+    private static final ObjectMapper MAPPER = configureObjectMapper(new ObjectMapper());
+
+    private static ObjectMapper configureObjectMapper(ObjectMapper mapper) {
+        // Apply the mixin to all Serializable classes to handle configuration classes
+        mapper.addMixIn(Serializable.class, SensitiveDataMaskingMixin.class);
+        return mapper;
+    }
 
     public static <T> T loadWithSecrets(Map<String, Object> map, Class<T> clazz, SourceContext sourceContext) {
         return loadWithSecrets(map, clazz, secretName -> sourceContext.getSecret(secretName));
@@ -93,7 +100,7 @@ public class IOConfigUtils {
         return MAPPER.convertValue(configs, clazz);
     }
 
-    private static List<Field> getAllFields(Class<?> type) {
+    public static List<Field> getAllFields(Class<?> type) {
         List<Field> fields = new LinkedList<>();
         fields.addAll(Arrays.asList(type.getDeclaredFields()));
         if (type.getSuperclass() != null) {

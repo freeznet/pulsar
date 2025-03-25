@@ -30,6 +30,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.module.paramnames.ParameterNamesModule;
+import java.io.Serializable;
 import java.util.concurrent.atomic.AtomicReference;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pulsar.client.admin.internal.data.AuthPoliciesImpl;
@@ -179,6 +180,15 @@ public class ObjectMapperFactory {
             .registerModule(new JavaTimeModule());
 
         setAnnotationsModule(mapper);
+        
+        // Apply sensitive data masking for all Serializable classes
+        try {
+            Class<?> clazz = Class.forName("org.apache.pulsar.io.common.SensitiveDataMaskingMixin");
+            mapper.addMixIn(Serializable.class, clazz);
+        } catch (ClassNotFoundException e) {
+            // SensitiveDataMaskingMixin may not be available, ignore
+        }
+        
         return mapper;
     }
 
