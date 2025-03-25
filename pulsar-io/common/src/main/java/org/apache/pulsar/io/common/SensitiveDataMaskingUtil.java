@@ -18,43 +18,42 @@
  */
 package org.apache.pulsar.io.common;
 
-import lombok.extern.slf4j.Slf4j;
-import org.apache.pulsar.io.core.annotations.FieldDoc;
-
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.Map;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.pulsar.io.core.annotations.FieldDoc;
 
 /**
  * Utility class for masking sensitive data in configuration objects.
- * 
+ *
  * <p>This utility provides methods to mask sensitive fields in configuration objects
- * that are annotated with {@code @FieldDoc(sensitive = true)}. 
- * 
+ * that are annotated with {@code @FieldDoc(sensitive = true)}.
+ *
  * <p>Usage with Jackson serialization:
  * <pre>{@code
  * // Apply mixin to mapper for automatic masking
  * ObjectMapper mapper = new ObjectMapper();
  * mapper.addMixIn(Serializable.class, SensitiveDataMaskingMixin.class);
- * 
+ *
  * // Any config serialized with this mapper will have sensitive fields masked
  * String json = mapper.writeValueAsString(configObject);
  * }</pre>
- * 
+ *
  * <p>Usage with Gson serialization:
  * <pre>{@code
  * // Create Gson instance with sensitive data masking
  * Gson gson = GsonSensitiveDataTypeAdapter.createGsonWithSensitiveDataMasking();
- * 
+ *
  * // Any config serialized with this Gson will have sensitive fields masked
  * String json = gson.toJson(configObject);
  * }</pre>
- * 
+ *
  * <p>Direct usage for manual masking:
  * <pre>{@code
  * // Get masked config as a Map
  * Map<String, Object> masked = SensitiveDataMaskingUtil.getMaskedConfig(configObject);
- * 
+ *
  * // Get masked config as a String
  * String maskedString = SensitiveDataMaskingUtil.toMaskedString(configObject);
  * }</pre>
@@ -66,32 +65,32 @@ public class SensitiveDataMaskingUtil {
 
     /**
      * Creates a copy of the config object with sensitive fields masked for logging.
-     * 
+     *
      * @param config The configuration object to mask
-     * @param <T> The type of the configuration object
+     * @param <T>    The type of the configuration object
      * @return A map with the same keys but with sensitive values masked
      */
     public static <T> Map<String, Object> getMaskedConfig(T config) {
         Map<String, Object> maskedConfig = new HashMap<>();
-        
+
         if (config == null) {
             return maskedConfig;
         }
-        
+
         try {
             // Use reflection to get all fields from the config class
             for (Field field : IOConfigUtils.getAllFields(config.getClass())) {
                 field.setAccessible(true);
                 String fieldName = field.getName();
                 Object value;
-                
+
                 try {
                     value = field.get(config);
                 } catch (Exception e) {
                     log.warn("Failed to get value for field {}", fieldName, e);
                     continue;
                 }
-                
+
                 // Check if the field is marked as sensitive
                 boolean isSensitive = false;
                 for (var annotation : field.getAnnotations()) {
@@ -103,7 +102,7 @@ public class SensitiveDataMaskingUtil {
                         }
                     }
                 }
-                
+
                 // Mask sensitive values
                 if (isSensitive && value != null) {
                     maskedConfig.put(fieldName, MASK_VALUE);
@@ -114,15 +113,15 @@ public class SensitiveDataMaskingUtil {
         } catch (Exception e) {
             log.error("Error creating masked config", e);
         }
-        
+
         return maskedConfig;
     }
-    
+
     /**
      * Returns a string representation of the config with sensitive fields masked.
-     * 
+     *
      * @param config The configuration object to mask
-     * @param <T> The type of the configuration object
+     * @param <T>    The type of the configuration object
      * @return A string representation with sensitive values masked
      */
     public static <T> String toMaskedString(T config) {

@@ -31,7 +31,7 @@ import lombok.extern.slf4j.Slf4j;
  */
 @Slf4j
 public class SensitiveDataMaskingSerializer extends JsonSerializer<Serializable> {
-    
+
     @Override
     public void serialize(Serializable value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
         try {

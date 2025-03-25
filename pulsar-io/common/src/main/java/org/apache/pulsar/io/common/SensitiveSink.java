@@ -19,14 +19,12 @@
 package org.apache.pulsar.io.common;
 
 import java.util.Map;
-
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.pulsar.functions.api.Record;
 import org.apache.pulsar.io.core.Sink;
 import org.apache.pulsar.io.core.SinkContext;
 import org.apache.pulsar.io.core.annotations.FieldDoc;
-
-import lombok.Data;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * A simple sink for testing sensitive data masking.
@@ -57,7 +55,7 @@ public class SensitiveSink implements Sink<String> {
     public void open(Map<String, Object> configMap, SinkContext sinkContext) throws Exception {
         log.info("Opening sensitive sink with config: {}", configMap);
         config = IOConfigUtils.loadWithSecrets(configMap, SensitiveSinkConfig.class, sinkContext);
-        
+
         // Log the config - this should mask the sensitivePassword
         log.info("Loaded sensitive sink config: {}", config);
     }
@@ -66,7 +64,7 @@ public class SensitiveSink implements Sink<String> {
     public void write(Record<String> record) throws Exception {
         // Just log the record but don't include the sensitive data
         log.info("Processing record: {}", record.getValue());
-        
+
         // Complete the record
         record.ack();
     }

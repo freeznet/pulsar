@@ -176,11 +176,11 @@ public class ObjectMapperFactory {
         // enable Jackson Java 8 support modules
         // https://github.com/FasterXML/jackson-modules-java8
         mapper.registerModule(new ParameterNamesModule())
-            .registerModule(new Jdk8Module())
-            .registerModule(new JavaTimeModule());
+                .registerModule(new Jdk8Module())
+                .registerModule(new JavaTimeModule());
 
         setAnnotationsModule(mapper);
-        
+
         // Apply sensitive data masking for all Serializable classes
         try {
             Class<?> clazz = Class.forName("org.apache.pulsar.io.common.SensitiveDataMaskingMixin");
@@ -188,7 +188,7 @@ public class ObjectMapperFactory {
         } catch (ClassNotFoundException e) {
             // SensitiveDataMaskingMixin may not be available, ignore
         }
-        
+
         return mapper;
     }
 
