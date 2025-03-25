@@ -21,6 +21,7 @@ package org.apache.pulsar.io.common;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.io.Serializable;
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -34,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.pulsar.io.core.SinkContext;
 import org.apache.pulsar.io.core.SourceContext;
 import org.apache.pulsar.io.core.annotations.FieldDoc;
-import java.io.Serializable;
 
 @Slf4j
 public class IOConfigUtils {
@@ -59,7 +59,8 @@ public class IOConfigUtils {
         if (config == null || config.isEmpty()) {
             return Collections.emptyMap();
         }
-        return MAPPER.readValue(config, new TypeReference<>() {});
+        return MAPPER.readValue(config, new TypeReference<>() {
+        });
     }
 
     private static <T> T loadWithSecrets(Map<String, Object> map, Class<T> clazz,
