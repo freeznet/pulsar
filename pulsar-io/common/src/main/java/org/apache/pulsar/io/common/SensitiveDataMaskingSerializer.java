@@ -43,4 +43,4 @@ public class SensitiveDataMaskingSerializer extends JsonSerializer<Serializable>
             gen.writeObject(value);
         }
     }
-} 
+}

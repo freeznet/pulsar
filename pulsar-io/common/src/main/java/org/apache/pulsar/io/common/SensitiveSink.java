@@ -73,4 +73,4 @@ public class SensitiveSink implements Sink<String> {
     public void close() throws Exception {
         // Nothing to close
     }
-} 
+}

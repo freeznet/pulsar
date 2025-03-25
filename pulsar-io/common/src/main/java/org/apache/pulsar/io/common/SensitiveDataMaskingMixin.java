@@ -28,4 +28,4 @@ import java.io.Serializable;
 @JsonSerialize(using = SensitiveDataMaskingSerializer.class)
 public interface SensitiveDataMaskingMixin extends Serializable {
     // No methods needed, just annotation
-} 
+}
